@@ -11,45 +11,37 @@ closedir(IN);
 
 my $tab="\t";
 
-foreach $file (sort @files){
-	if(($file =~ /^\./) or -f $file){
-		print "[D]$file\n";
-		next;
-	} else {
-		#print "[D]\t$_\n";	# Directory check by -d could not determin the directory as a directory.
-		open(IN, "$ARGV[0]/$file/log/alert.log.cur") or die "[E] Not found: $ARGV[0]/$file/log/alert.log.cur";
-		while(<IN>){
-			if ((/^$/) || (/\*{5}/) || (/not exist, now create it/)){ next;}
-			chop;
-			s/.* save alert to local file://;
-			@tmp = split(/[\s,]/);
-			$mdate	= shift(@tmp);
-			$i = $mdate;
-			$i =~ s/\/.+//;
-			#print "[D] $i\n";
-			#if ($i < 2000){
-			#	$i+=2000;
-			#	$mdate =~ s/^../$i/;
-			#}
-			$mtime	= shift(@tmp);
-			#$mtime =~ s/\[.*//;
-			#print "[D] $mdate $mtime\n";
-			$mod	= shift(@tmp);
-			shift(@tmp);
-			$lvl	= shift(@tmp);
-			$msg	= join(' ', @tmp);
-			#s/^(. ).{91}(.{23}),(.+?),.+?,.+?,/$2 $dir\t$1$3$tab/;
-			#s/^(. ).{91}(.{23}),(.+?),.+?,.+?,/$2\t$1$3$tab/;
-			#s/^. (.+?)\[.*local file:.*?,(.+?),.+?,(.+?),/$1 $2 $3$tab/;
-			# $line = sprintf("$mdate $mtime $file $lvl$tab$msg\n");
-			$line = sprintf("$mdate $mtime $file $lvl %7s $tab$msg\n", $mod);
-			push @lines, $line;
+foreach $dir (sort @files){
+	if (( -d $dir ) && ($dir ne ".") && ($dir ne "..")){
+		opendir(IN, "$dir/log") or next;
+		my @files2 = readdir(IN) or next;
+		foreach $file (sort @files2) {
+			if($file =~ /^alert.log./){
+				open(IN2, "$dir/log/$file");
+				printf("[D] $dir/log/$file\n");
+				while(<IN2>){
+					if ((/^$/) || (/\*{5}/) || (/not exist, now create it/)){ next;}
+					chop;
+					s/.* save alert to local file://;
+					@tmp = split(/[\s,]/);
+					$mdate	= shift(@tmp);
+					$i = $mdate;
+					$i =~ s/\/.+//;
+					$mtime	= shift(@tmp);
+					$mod	= shift(@tmp);
+					shift(@tmp);
+					$lvl	= shift(@tmp);
+					$msg	= join(' ', @tmp);
+					$line = sprintf("$mdate $mtime $dir $lvl %7s$tab$msg\n", $mod);
+					push @lines, $line;
+				}
+				close(IN2);
+			}
 		}
-		close(IN);
+		$tab .= "\t";
+		closedir(IN);
 	}
-	$tab .= "\t";
 }
-#exit;
 
 use Time::Local qw( timelocal );
 my $init = 0;
