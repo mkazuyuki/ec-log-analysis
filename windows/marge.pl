@@ -22,7 +22,7 @@ foreach $dir (sort @files){
 				print("[D] reading [$dir/log/$file]\n");
 				while(<IN2>){
 					#  format "date","PID & TID","log level" into "date", "hostname", "log level"
-					s/^(.+? .+? )(.+? .+? )([^\s]+)\s+/$1$dir $3 $tab/;
+					s/^(.+? .+? )(.+? .+? )([^\s]+)\s+/$1$dir $3  $tab/;
 					push @lines, $_;
 				}
 				close(IN2);
