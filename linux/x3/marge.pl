@@ -20,7 +20,7 @@ foreach $dir (sort @files){
 				open(IN2, "$dir/log/$file");
 				printf("[D] $dir/log/$file\n");
 				while(<IN2>){
-					if ((/^$/) || (/\*{5}/) || (/not exist, now create it/)){ next;}
+					if ((!/^.\s\d\d\//) || (/not exist, now create it./)){next;}
 					chop;
 					s/.* save alert to local file://;
 					@tmp = split(/[\s,]/);
@@ -31,6 +31,9 @@ foreach $dir (sort @files){
 					$mod	= shift(@tmp);
 					shift(@tmp);
 					$lvl	= shift(@tmp);
+					if ($lvl == 1) { $lvl = "ERR " }
+					elsif ($lvl == 2) { $lvl = "WARN" }
+					elsif ($lvl == 3) { $lvl = "INFO" };
 					$msg	= join(' ', @tmp);
 					$line = sprintf("$mdate $mtime $dir $lvl %7s$tab$msg\n", $mod);
 					push @lines, $line;
