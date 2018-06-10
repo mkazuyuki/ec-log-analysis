@@ -12,6 +12,7 @@ opendir(IN, $ARGV[0]);
 closedir(IN);
 
 my $tab="\t";
+# Node2 - Node1 = timedelta:
 my $timedelta = 60 * 60;
 my $adjust = 0;
 
