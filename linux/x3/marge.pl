@@ -21,12 +21,11 @@ foreach $dir (sort @files){
 				printf("[D] $dir/log/$file\n");
 				while(<IN2>){
 					if ((!/^.\s\d\d\//) || (/not exist, now create it./)){next;}
+					if (!/.* save alert to local file:/){next;}
 					chop;
 					s/.* save alert to local file://;
 					@tmp = split(/[\s,]/);
 					$mdate	= shift(@tmp);
-					$i = $mdate;
-					$i =~ s/\/.+//;
 					$mtime	= shift(@tmp);
 					$mod	= shift(@tmp);
 					shift(@tmp);

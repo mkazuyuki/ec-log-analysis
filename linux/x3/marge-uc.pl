@@ -11,63 +11,66 @@ opendir(IN, $ARGV[0]);
 @files = readdir(IN) or die ("Error : Could not open directory");
 closedir(IN);
 
-my $tab="\t";
 # Node2 - Node1 = timedelta:
 my $timedelta = 60 * 60;
-my $adjust = 0;
+my $timeadjust = 0;
+my $tab="\t";
 
-foreach $file (sort @files){
-	if(($file =~ /^\./) or -f $file){
-		print "[D]$file\n";
-		next;
-	} else {
-		#print "[D]\t$_\n";	# Directory check by -d could not determin the directory as a directory.
-		print "[D] $ARGV[0]/$file/log/alert.log.cur\n";
-		open(IN, "$ARGV[0]/$file/log/alert.log.cur") or die "[E] Not found: $ARGV[0]/$file/log/alert.log.cur";
-		while(<IN>){
-			if ((!/^.\s\d\d\//) || (/not exist, now create it./)){next;}
-			if (!/.* save alert to local file:/){next;}
-			chop;
-			s/.* save alert to local file://;
-			@tmp = split(/[\s,]/);
-			$mdate	= shift(@tmp);
-			$mtime	= shift(@tmp);
-			$mod	= shift(@tmp);
-			shift(@tmp);
-			$lvl	= shift(@tmp);
-			$msg	= join(' ', @tmp);
-			if ($lvl == 1) { $lvl = "ERR " }
-			elsif ($lvl == 2) { $lvl = "WARN" }
-			elsif ($lvl == 3) { $lvl = "INFO" };
+foreach $dir (sort @files){
+	if (( -d $dir ) && ($dir ne ".") && ($dir ne "..")){
+		opendir(IN, "$dir/log") or next;
+		my @files2 = readdir(IN) or next;
+		foreach $file (sort @files2) {
+			if($file =~ /^alert.log./){
+				open(IN2, "$dir/log/$file");
+				printf("[D] $dir/log/$file\n");
+				while(<IN2>){
+					if ((!/^.\s\d\d\//) || (/not exist, now create it./)){next;}
+					if (!/.* save alert to local file:/){next;}
+					chop;
+					s/.* save alert to local file://;
+					@tmp = split(/[\s,]/);
+					$mdate	= shift(@tmp);
+					$mtime	= shift(@tmp);
+					$mod	= shift(@tmp);
+					shift(@tmp);
+					$lvl	= shift(@tmp);
+					if ($lvl == 1) { $lvl = "ERR " }
+					elsif ($lvl == 2) { $lvl = "WARN" }
+					elsif ($lvl == 3) { $lvl = "INFO" };
+					$msg	= join(' ', @tmp);
 
-	$year = $month = $mday = $hour = $min = $sec = $msec = "$mdate $mtime";
-	$year	 =~ s/^(.{4}).*/$1/;
-	$month =~ s/^.{5}(.{2}).*/$1/;
-	$mday	=~ s/^.{8}(.{2}).*/$1/;
-	$hour	=~ s/^.{11}(.{2}).*/$1/;
-	$min 	=~ s/^.{14}(.{2}).*/$1/;
-	$sec 	=~ s/^.{17}(.{2}).*/$1/;
-	$msec	=~ s/^.{20}(.{3}).*/$1/;
-	$month	-= 1;
-	$year	-= 1900;
-
-	#printf("$epoch %d/%02d/%02d %02d:%02d:%02d.%03d\t", $year+1900, $month+1, $mday, $hour, $min, $sec, $msec);
-	$epoch = timelocal($sec, $min, $hour, $mday, $month, $year);
-
-	$epoch -= $timeadjust;
-
-	($sec, $min, $hour, $mday, $month, $year, $wday, $stime) = localtime($epoch);
-	#printf("$epoch %d/%02d/%02d %02d:%02d:%02d.%03d\n", $year+1900, $month+1, $mday, $hour, $min, $sec, $msec);
-	$date = sprintf("%d/%02d/%02d %02d:%02d:%02d.%03d", $year+1900, $month+1, $mday, $hour, $min, $sec, $msec);
-
-			#$line = sprintf("$mdate $mtime $file $lvl %7s $tab$msg\n", $mod);
-			$line = sprintf("$date $file $lvl %7s $tab$msg\n", $mod);
-			push @lines, $line;
+					$year = $month = $mday = $hour = $min = $sec = $msec = "$mdate $mtime";
+					$year	 =~ s/^(.{4}).*/$1/;
+					$month =~ s/^.{5}(.{2}).*/$1/;
+					$mday	=~ s/^.{8}(.{2}).*/$1/;
+					$hour	=~ s/^.{11}(.{2}).*/$1/;
+					$min 	=~ s/^.{14}(.{2}).*/$1/;
+					$sec 	=~ s/^.{17}(.{2}).*/$1/;
+					$msec	=~ s/^.{20}(.{3}).*/$1/;
+					$month	-= 1;
+					$year	-= 1900;
+		
+					#printf("$epoch %d/%02d/%02d %02d:%02d:%02d.%03d\t", $year+1900, $month+1, $mday, $hour, $min, $sec, $msec);
+					$epoch = timelocal($sec, $min, $hour, $mday, $month, $year);
+		
+					$epoch -= $timeadjust;
+		
+					($sec, $min, $hour, $mday, $month, $year, $wday, $stime) = localtime($epoch);
+					#printf("$epoch %d/%02d/%02d %02d:%02d:%02d.%03d\n", $year+1900, $month+1, $mday, $hour, $min, $sec, $msec);
+					$date = sprintf("%d/%02d/%02d %02d:%02d:%02d.%03d", $year+1900, $month+1, $mday, $hour, $min, $sec, $msec);
+		
+					#$line = sprintf("$mdate $mtime $file $lvl %7s $tab$msg\n", $mod);
+					$line = sprintf("$date $dir $lvl %7s $tab$msg\n", $mod);
+					push @lines, $line;
+				}
+				close(IN2);
+			}
 		}
-		close(IN);
+		$tab .= "\t";
+		$timeadjust += $timedelta;
+		closedir(IN);
 	}
-	$tab .= "\t";
-	$timeadjust += $timedelta;
 }
 
 use Time::Local qw( timelocal );
