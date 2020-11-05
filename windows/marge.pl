@@ -18,7 +18,8 @@ foreach $dir (sort @files){
 		foreach $file (sort @files2) {
 			#print("[D] $f\n");
 			if ($file =~ /userlog/){
-				open(IN2, "nkf -w $dir/log/$file | ") or next;
+				#open(IN2, "nkf -w $dir/log/$file | ") or next;
+				open(IN2, "$dir/log/$file") or next;
 				print("[D] reading [$dir/log/$file]\n");
 				while(<IN2>){
 					#  format "date","PID & TID","log level" into "date", "hostname", "log level"
