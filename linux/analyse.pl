@@ -153,7 +153,7 @@ while(1){
 				$timeprev = timelocal(0, 0, $hour+1, $mday, $month, $year);
 			};
 			if($@){
-				$timeprev += 60*24;
+				$timeprev += 60*60;
 			}
 		} elsif($timecurr - $timeprev > 60){
 			eval{
